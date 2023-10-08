@@ -1,4 +1,5 @@
-import { Proposition, Problem } from '.';
+import { Problem } from '.';
+import { Proposition } from './attrs-and-props';
 
 function exactTest(p: Problem, models: Proposition[][], minTests?: number, maxTests?: number) {
   let MIN = minTests || 100;
@@ -9,8 +10,8 @@ function exactTest(p: Problem, models: Proposition[][], minTests?: number, maxTe
 
   let iterCount = 0;
   while (true) {
-    p.solve();
-    const model = p.values!.sort();
+    const s = p.solve();
+    const model = s.trueAttributes.sort();
     let found = false;
     for (let j = 0; j < models.length; j++) {
       const expected = models[j];
@@ -45,8 +46,8 @@ function exactTest(p: Problem, models: Proposition[][], minTests?: number, maxTe
 
 test('p <= -q, q <= -p, does not admit {p, q} as a solution', () => {
   const p = new Problem();
-  p.predicate('p');
-  p.predicate('q');
+  p.attribute('p');
+  p.attribute('q');
 
   p.rule('q', ['!p']);
   p.rule('p', ['!q']);
@@ -55,8 +56,8 @@ test('p <= -q, q <= -p, does not admit {p, q} as a solution', () => {
 
 test('-q > p, -p > q, admits {p, q} as a solution', () => {
   const p = new Problem();
-  p.predicate('p', []);
-  p.predicate('q', []);
+  p.attribute('p', []);
+  p.attribute('q', []);
 
   p.implies([`!p`], `q`);
   p.implies([`!q`], `p`);
@@ -65,10 +66,10 @@ test('-q > p, -p > q, admits {p, q} as a solution', () => {
 
 test('Iff-completion for a proposition defined by two rules', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
-  p.predicate('d');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
+  p.attribute('d');
 
   p.rule(`a`, [`b`, `c`]);
   p.rule(`a`, [`d`]);
@@ -87,10 +88,10 @@ test('Iff-completion for a proposition defined by two rules', () => {
 
 test('quantification()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
-  p.predicate('d');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
+  p.attribute('d');
 
   expect(() => {
     p.quantify(-2, -1, ['a', 'b', 'd']);
@@ -120,22 +121,22 @@ test('quantification()', () => {
 
 test('equals()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
+  p.attribute('a');
+  p.attribute('b');
 
   p.equal([`a`], [`b`]);
   exactTest(p, [[], ['a', 'b']]);
 
-  p.predicate('c');
-  p.predicate('d');
+  p.attribute('c');
+  p.attribute('d');
   p.equal([`a`, `c`], [`d`]);
   exactTest(p, [[], ['c'], ['a', 'b'], ['a', 'b', 'c', 'd']]);
 
   p.equal([`c`], [`a`, `d`]);
   exactTest(p, [[], ['a', 'b'], ['a', 'b', 'c', 'd']]);
 
-  p.predicate('e');
-  p.predicate('f');
+  p.attribute('e');
+  p.attribute('f');
   p.equal([`c`, `d`], [`!e`, `!f`]);
   exactTest(p, [
     ['e'],
@@ -161,9 +162,9 @@ test('equals()', () => {
 
 test('exactly()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   expect(() => {
     p.exactly(1.5, ['a', 'b', 'c']);
@@ -204,9 +205,9 @@ test('exactly()', () => {
 
 test('atMost()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   expect(() => {
     p.atMost(-1, ['a', 'b', 'c']);
@@ -226,9 +227,9 @@ test('atMost()', () => {
 
 test('atLeast()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   expect(() => {
     p.atLeast(0, ['a', 'b', 'c']);
@@ -245,9 +246,9 @@ test('atLeast()', () => {
 
 test('all()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   expect(() => {
     p.all([]);
@@ -259,9 +260,9 @@ test('all()', () => {
 });
 test('unique()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   expect(() => {
     p.unique([]);
@@ -278,9 +279,9 @@ test('unique()', () => {
 
 test('inconsistent()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   p.inconsistent(`a`, `!b`);
   p.inconsistent(`b`, `c`);
@@ -290,11 +291,11 @@ test('inconsistent()', () => {
 
 test('quantify()', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
-  p.predicate('d');
-  p.predicate('e');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
+  p.attribute('d');
+  p.attribute('e');
 
   expect(() => {
     p.quantify(-1, -1, ['a', 'b', 'c']);
@@ -328,27 +329,14 @@ test('quantify()', () => {
   ]);
 });
 
-test('values()', () => {
-  const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-
-  p.assert(`a`);
-  p.assert(`!b`);
-
-  expect(p.values).toBeNull();
-  p.solve();
-  expect(p.values).toEqual(['a']);
-});
-
 test('test all supported arities', () => {
   const p = new Problem();
   const two = ['green', 'red'];
   const three = ['apple', 'banana', 'kiwi'];
-  p.predicate('a');
-  p.predicate('b', [two]);
-  p.predicate('c', [two, three]);
-  p.predicate('d', [two, two, two]);
+  p.attribute('a');
+  p.attribute('b', [two]);
+  p.attribute('c', [two, three]);
+  p.attribute('d', [two, two, two]);
 
   for (const x of two) {
     for (const y of three) {
@@ -381,9 +369,9 @@ test('test all supported arities', () => {
 
 test('Show constraints', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
 
   p.quantify(0, 0, [`a`]);
   p.quantify(0, 1, [`a`, `b`]);
@@ -399,7 +387,7 @@ test('Show constraints', () => {
 
 test('Unsatisfiable constraints raise an exception', () => {
   const p = new Problem();
-  p.predicate('a');
+  p.attribute('a');
   p.assert(`a`);
   p.assert(`!a`);
   expect(() => {
@@ -409,10 +397,10 @@ test('Unsatisfiable constraints raise an exception', () => {
 
 test('Negations allowed in implication heads, but not rule heads', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
-  p.predicate('d');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
+  p.attribute('d');
 
   expect(() => {
     p.implies([`a`], `!b`);
@@ -425,13 +413,13 @@ test('Negations allowed in implication heads, but not rule heads', () => {
 
 test('Rules with no premises and equals [] work like an assertion', () => {
   const p = new Problem();
-  p.predicate('a');
-  p.predicate('b');
-  p.predicate('c');
-  p.predicate('d');
-  p.predicate('e');
-  p.predicate('f');
-  p.predicate('g');
+  p.attribute('a');
+  p.attribute('b');
+  p.attribute('c');
+  p.attribute('d');
+  p.attribute('e');
+  p.attribute('f');
+  p.attribute('g');
 
   p.rule(`a`, []);
   p.rule(`b`, [`c`]);
@@ -447,75 +435,88 @@ test('Unsupported arities', () => {
   const p = new Problem();
   const two = ['green', 'red'];
   expect(() => {
-    p.predicate('a', [two, two, two, two]);
+    p.attribute('a', [two, two, two, two]);
   }).toThrowErrorMatchingSnapshot();
   expect(() => {
-    p.predicate('b', [two]);
+    p.attribute('b', [two]);
   }).not.toThrow();
   expect(() => {
-    p.predicate('b');
+    p.attribute('b');
   }).toThrowErrorMatchingSnapshot();
   expect(() => {
-    p.predicate('b', [['x', 'y', 'z']]);
+    p.attribute('b', [['x', 'y', 'z']]);
   }).toThrowErrorMatchingSnapshot();
   expect(() => {
-    p.predicate('b', [two]);
+    p.attribute('b', [two]);
   }).toThrowErrorMatchingSnapshot();
 });
 
-test('Test predicate and constant syntax', () => {
+test('Test predicate and element syntax', () => {
   const p = new Problem();
-  expect(() => {
-    p.predicate('A');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.predicate(' a ');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.predicate('a', [['x'], ['y']]);
-  }).not.toThrow();
-  expect(() => {
-    p.predicate('b', [['x']]);
-  }).not.toThrow();
-  expect(() => {
-    p.predicate('b c');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.predicate('1b');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.predicate('a1B_C');
-  }).not.toThrow();
-  expect(() => {
-    p.predicate('a', [['X']]);
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.predicate('a', [['1X', 'a']]);
-  }).toThrow();
-  expect(() => {
-    p.predicate('a', [['c', 'd e']]);
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('a z');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('a z y');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('a x y z');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('b x y z');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('a Z y');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('_a');
-  }).toThrowErrorMatchingSnapshot();
-  expect(() => {
-    p.assert('f');
-  }).toThrowErrorMatchingSnapshot();
+
+  // Invalid predicate names
+  expect(() => p.attribute('A')).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute(' a ')).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('b c')).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('1b')).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('a1B_C')).not.toThrow();
+
+  // Invalid elements in domain
+  expect(() => p.attribute('c', [['X']])).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('c', [['1X', 'a']])).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('c', [['c', 'd e']])).toThrowErrorMatchingSnapshot();
+
+  // Valid attribute declarations
+  expect(() => p.attribute('d', [])).not.toThrow();
+  expect(() => p.attribute('a', [['x'], ['x']])).not.toThrow();
+  expect(() => p.attribute('b', [['x']])).not.toThrow();
+  expect(() => p.attribute('c', [['x'], ['x'], ['x']])).not.toThrow();
+
+  // Can't re-declare attributes
+  expect(() => p.attribute('a', [['y']])).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('a', [['x'], ['x']])).toThrowErrorMatchingSnapshot();
+  expect(() => p.attribute('d')).toThrowErrorMatchingSnapshot();
+
+  // Asserting invalid propositions
+  expect(() => p.assert('f')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('a Z y')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('_a')).toThrowErrorMatchingSnapshot();
+
+  // Asserting with arity errors
+  expect(() => p.assert('a x')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('a x x z')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('b')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('b x x')).toThrowErrorMatchingSnapshot();
+
+  // Out-of-domain arguments
+  expect(() => p.assert('b z')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('a z x')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('a x z')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('c z x x')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('c x z x')).toThrowErrorMatchingSnapshot();
+  expect(() => p.assert('c x x z')).toThrowErrorMatchingSnapshot();
+});
+
+test('Test solution lookup', () => {
+  const p = new Problem();
+  p.attribute('a');
+  p.attribute('b');
+
+  p.assert('a');
+  const s = p.solve();
+  expect(s.lookup['a']).toBe(true);
+  const bValue = s.lookup['b'];
+  expect(() => s.lookup['c']).toThrowErrorMatchingSnapshot();
+
+  p.attribute('c');
+  p.assert(bValue ? '!b' : 'b');
+  p.implies(['a'], 'c');
+  exactTest(p, bValue ? [['a', 'c']] : [['a', 'b', 'c']]);
+
+  // The old solution is still valid after rerunning the solver
+  expect(s.lookup['a']).toBe(true);
+  expect(s.lookup['b']).toBe(bValue);
+  expect(() => s.lookup['c']).toThrowErrorMatchingSnapshot();
 });
 
 /*

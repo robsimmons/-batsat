@@ -60,14 +60,18 @@ p.atMost(
   cast.map((c) => `home ${c} doghouse`),
 );
 
-console.log(p.values); // This will be null because solve() hasn't been called
-p.solve();
-console.log(p.values); // Something like ["species celeste cat", ...]
+const s = p.solve();
+s.trueAttributes; // Something like ["species celeste cat", ...]
+s.lookup['species celeste cat']; // Maybe true, maybe false
+s.lookup['species celeste cat'] === s.lookup['home celeste catlands']; // Definitely true
 ```
 
 <!-- TSDOC_START -->
 
 ## :factory: Problem
+
+Problems are the primary engine of BatSAT. You use a problem to declare attributes,
+attach constraints, and generate solutions.
 
 ### Methods
 
@@ -84,11 +88,11 @@ console.log(p.values); // Something like ["species celeste cat", ...]
 - [rule](#gear-rule)
 - [showConstraints](#gear-showconstraints)
 - [solve](#gear-solve)
-- [predicate](#gear-predicate)
+- [attribute](#gear-attribute)
 
 #### :gear: quantify
 
-Require that some number of arguments be true.
+Require that some number of arguments be satisfied
 
 | Method     | Type                                                         |
 | ---------- | ------------------------------------------------------------ |
@@ -96,12 +100,12 @@ Require that some number of arguments be true.
 
 Parameters:
 
-- `min`: Minimum number of arguments that must be true (inclusive)
-- `max`: Maximum number of arguments that must be true (inclusive)
+- `min`: Minimum number of arguments that must be satisfied (inclusive)
+- `max`: Maximum number of arguments that must be satisfied (inclusive)
 
 #### :gear: exactly
 
-Require that exactly a given number of the arguments be true.
+Require that exactly a given number of the arguments be satisfied
 
 `p.exactly(n, [a, b, c...])` is equivalent to `p.quantify(n, n, [a, b, c...])`
 
@@ -111,11 +115,11 @@ Require that exactly a given number of the arguments be true.
 
 Parameters:
 
-- `n`: The number of arguments from the list that must be true
+- `n`: The number of arguments from the list that must be satisfied
 
 #### :gear: all
 
-Require that all arguments be true.
+Require that all arguments be satisfied
 
 `p.all([a, b, c])` is equivalent to `p.quantify(3, 3, [a, b, c])` or
 `p.exactly(3, [a, b, c])`
@@ -126,7 +130,7 @@ Require that all arguments be true.
 
 #### :gear: atLeast
 
-Require that some non-zero number of arguments be true
+Require that some non-zero number of arguments be satisfied
 
 `p.atLeast(n, [a, b, c, d])` is equivalent to `p.quantify(n, 4, [a, b, c, d])`
 
@@ -136,13 +140,13 @@ Require that some non-zero number of arguments be true
 
 Parameters:
 
-- `min`: The minimum number of arguments that must be true (inclusive)
+- `min`: The minimum number of arguments that must be satisfied (inclusive)
 
 #### :gear: atMost
 
-Require that at most some number of arguments be true
+Require that at most some number of arguments be satisfied
 
-`p.atMost(n, [a, b, c])` is equivlanet to `p.quantify(0, n, [a, b, c])`
+`p.atMost(n, [a, b, c])` is equivalent to `p.quantify(0, n, [a, b, c])`
 
 | Method   | Type                                            |
 | -------- | ----------------------------------------------- |
@@ -150,11 +154,11 @@ Require that at most some number of arguments be true
 
 Parameters:
 
-- `max`: The maximum number of arguments that must be true (inclusive)
+- `max`: The maximum number of arguments that must be satisfied (inclusive)
 
 #### :gear: unique
 
-Require that exactly one of the arguments be true.
+Require that exactly one of the arguments be satisfied
 
 `p.unique(a, b, c...)` is equivlanet to `p.exactly(1, a, b, c...)`
 
@@ -164,7 +168,7 @@ Require that exactly one of the arguments be true.
 
 #### :gear: inconsistent
 
-Marks two propositions as inconsistent
+Require that two propositions not be simultaneously satisfied
 
 | Method         | Type                             |
 | -------------- | -------------------------------- |
@@ -173,14 +177,15 @@ Marks two propositions as inconsistent
 #### :gear: implies
 
 Indicates that the premise or premises imply the conclusion:
-if the premise(s) hold(s), the conclusion must also hold.
+if all premises are satisfied, the conclusion must be satisfied.
 
 An array of premises is treated as conjunction: `p.implies([a, b, c], d)`
 logically means `(a /\ b /\ c) -> d`.
 
-Leaves open the possibility that the conclusion must be true even if all
-premises are false. If you only want `d` to be true if there's some reason
-for it to be true, you want to use `rule()`, not `implies()`.
+Leaves open the possibility that the conclusion may be satisfied even if some
+premises are unsatisfied. If that's not what you want --- if you only want `d`
+to be satisfied if there's some rule that gives a reason for it to be satisfied,
+you want to use `rule()` instead of `implies()`.
 
 | Method    | Type                                               |
 | --------- | -------------------------------------------------- |
@@ -189,11 +194,12 @@ for it to be true, you want to use `rule()`, not `implies()`.
 Parameters:
 
 - `premises`: A conjuctive list of premises
-- `conclusion`: A proposition that must be true if premises are
+- `conclusion`: A proposition that must be satisfied if premises are
 
 #### :gear: equal
 
-Requires two conjuctive formulas to have the same truth value.
+Requires two conjuctive formulas be equal: either both are satisfied or
+neither are satisfied. (This is also called an if-and-only-if relationship.)
 
 An array is treated as conjunction: `p.equal([a, b], [c, d, e])` logically
 means `(a /\ b) <-> (c /\ d /\ e)`.
@@ -209,7 +215,7 @@ Parameters:
 
 #### :gear: assert
 
-Assert that a single fact must be true.
+Assert that a single proposition must be satisfied.
 
 | Method   | Type                  |
 | -------- | --------------------- |
@@ -217,19 +223,20 @@ Assert that a single fact must be true.
 
 #### :gear: rule
 
-Indicates that the conclusion (the "head" of the rule) is defined
-by its premise. If the premise(s) hold(s), the conclusion must also hold,
-and if the conclusion holds, then the truth of that conclusion must be
-derivable via some rule for which the premise holds.
+Indicates that the attribute in the conclusion (the "head" of the rule) is
+defined by this rule (and every other rule that has the attribute at the head).
+If all premises are satisfied, the conclusion must be assigned `true`,
+and if the conclusion is assigned `true`, then that must be justified
+derivable via some rule that defines the conclusion, for which the premise holds.
 
-(It's the second part, the fact that the conclusion must be derivable
-from some premise that holds, which makes Rule different from Implies,
-aside from them facing the opposite direction.)
+It's the second part, the fact that the conclusion must be derivable
+from some premise that holds, which makes `rule()` different from `implies()`.
+They also "point" in opposite directions.
 
 An array of premises is treated as conjunction: `p.rule(a, [b, c, d])`
-logically means that `(b /\ c /\ d) -> a` and that, if `a` holds,
-either `(b /\ c /\ d)` OR the premises of some other rule that has
-`a` as its conclusion must hold.
+logically means that `(b /\ c /\ d) -> a` and that, if `a` is assigned `true`,
+either `(b /\ c /\ d)` is satisfied OR the premises of some other rule that has
+`a` as its conclusion is satisfied.
 
 | Method | Type                                               |
 | ------ | -------------------------------------------------- |
@@ -250,26 +257,29 @@ Print current constraints to the console
 
 #### :gear: solve
 
-Attempt to satisfy all the constraints descibed so far
+Attempt to find an assignment that will satisfy all the currently-declared constraints.
 
-| Method  | Type         |
-| ------- | ------------ |
-| `solve` | `() => void` |
+Throws an exception if enough iterations go by without finding a satisfying assignment.
 
-#### :gear: predicate
+| Method  | Type             |
+| ------- | ---------------- |
+| `solve` | `() => Solution` |
 
-Declares a new predicate.
+#### :gear: attribute
 
-To create a new atom that takes no arguments, you can write
-something like `p.predicate('q')` or `p.predicate('q', [])`. Both mean
+Declares a new attribute.
+
+To create a new attribute that takes no arguments, you can write
+something like `p.attribute('q')` or `p.attribute('q', [])`. Both mean
 the same thing: they declare a predicate `q` that takes no
 arguments.
 
 To specify a predicate that does take arguments, you must
 describe the _domain_ of those arguments. For instance, if
 you wanted to describe some cats and their colors, so that
-you could say `colored celeste gray` and `colored terra orange`,
-then you'd declare a predicate `colored` like this:
+you could have attributes like `colored celeste gray` and
+`colored terra orange`, then you'd declare a predicate `colored` like
+this:
 
 ```
 let cast = ['celeste', 'nimbus', 'terra'];
@@ -279,11 +289,32 @@ p.predicate('colored', [cast, color]);
 
 | Method      | Type                                        |
 | ----------- | ------------------------------------------- |
-| `predicate` | `(name: string, args?: string[][]) => void` |
+| `attribute` | `(name: string, args?: string[][]) => void` |
 
 Parameters:
 
-- `name`: The name of the predicate.
-- `args`: The domains of the argument.
+- `name`: The name of the predicate
+- `args`: The domains of the argument
 
 <!-- TSDOC_END -->
+
+## :factory: Solution
+
+Solutions are returned the solve() method of a problem.
+
+### Fields
+
+- [trueAttributes](#gear-trueAttributes)
+- [lookup](#gear-lookup)
+
+#### :gear: trueAttributes
+
+Holds all the attributes that have been assigned true in the solution (in sorted order).
+
+Type: `string[]`
+
+#### :gear: lookup
+
+A read-only map from attributes to their values.
+
+Type: `{ [attribute: string]: boolean }`
