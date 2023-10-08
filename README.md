@@ -34,10 +34,15 @@ for (const c of cast) {
 
   // Only dogs live in the doghouse (but dogs can live elsewhere)
   p.implies([`home ${c} doghouse`], `species ${c} dog`);
-
-  // Cats, and only cats, live in the catlands
-  p.equal([`home ${c} catlands`], [`species ${c} cat`]);
 }
+
+// Luna and terra must live in different places
+for (const h of home) {
+  p.inconsistent(`home luna ${h}`, `home terra ${h}`);
+}
+
+// If Celeste is a cat, she must live in the catlands
+p.equal([`species celeste cat`], [`home celeste catlands`]);
 
 // There need to be 1 or 2 uplanders
 p.quantify(
