@@ -1,6 +1,6 @@
 # BatSAT 🦇
 
-[![Coverage Status](https://coveralls.io/repos/github/robsimmons/batsat/badge.svg?branch=testing)](https://coveralls.io/github/robsimmons/batsat?branch=testing)
+[![Coverage Status](https://coveralls.io/repos/github/robsimmons/batsat/badge.svg?branch=main)](https://coveralls.io/github/robsimmons/batsat?branch=main)
 
 BatSAT is a declarative language embedded in JavaScript intended for
 procedural content generation.
