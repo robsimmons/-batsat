@@ -7,7 +7,7 @@
     "build": "tsc",
     "test": "jest --coverage",
     "watch": "jest --watchAll",
-    "doc": "tsdoc --src=src/index.ts"
+    "doc": "tsdoc --src=src/index.ts && prettier --write README.md"
   },
   "author": "Rob Simmons",
   "license": "GPL-3.0",
