@@ -4,6 +4,7 @@
   "description": "A CatSAT implementation for the browser 🦇",
   "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "test": "jest --coverage",
     "watch": "jest --watchAll"
   },
