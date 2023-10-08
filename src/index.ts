@@ -285,7 +285,7 @@ export class Problem {
   /**
    * Requires two conjuctive formulas to have the same truth value.
    *
-   * An array is treated as conjunction: `Equal([a, b], [c, d, e])` logically
+   * An array is treated as conjunction: `p.equal([a, b], [c, d, e])` logically
    * means `(a /\ b) <-> (c /\ d /\ e)`.
    *
    * @param a A conjuctive list of propositions
@@ -351,7 +351,7 @@ export class Problem {
    * from some premise that holds, which makes Rule different from Implies,
    * aside from them facing the opposite direction.)
    *
-   * An array of premises is treated as conjunction: `Rule(a, [b, c, d])`
+   * An array of premises is treated as conjunction: `p.rule(a, [b, c, d])`
    * logically means that `(b /\ c /\ d) -> a` and that, if `a` holds,
    * either `(b /\ c /\ d)` OR the premises of some other rule that has
    * `a` as its conclusion must hold.
@@ -452,6 +452,7 @@ export class Problem {
     };
   }
 
+  /** Print current constraints to the console */
   showConstraints() {
     this._constraints.map(({ lo, hi, clause }, i) => {
       let num =
@@ -474,6 +475,7 @@ export class Problem {
     });
   }
 
+  /** Attempt to satisfy all the constraints descibed so far */
   solve() {
     if (this.nonRuleConstraints === null) {
       this.nonRuleConstraints = this._constraints.length;
@@ -654,13 +656,19 @@ export class Problem {
     }
   }
 
-  get values() {
+  /**
+   * Returns the list of true atoms in the satisfying assignment.
+   *
+   * Returns `null` if `solve()` has been run or if constraints have been
+   * modified since `solve()` was last run.
+   */
+  get values(): null | Atom[] {
     if (this.satisfyingAssignment === null) {
       return null;
     }
 
     return this.satisfyingAssignment
       .map((v, i) => (v ? this.fromInternal[i] : undefined))
-      .filter((x) => x);
+      .filter((x): x is Atom => !!x);
   }
 }
