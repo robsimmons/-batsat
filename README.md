@@ -20,6 +20,8 @@ Here's an example script that will assign species and homes
 for four characters:
 
 ```typescript
+import { Problem } from 'batsat';
+
 const p = new Problem();
 const cast = ['celeste', 'nimbus', 'luna', 'terra'];
 const species = ['cat', 'dog'];
