@@ -62,15 +62,15 @@ exports[`Unsupported arities 3`] = `"Cannot declare b (with 1 argument) when b (
 
 exports[`Unsupported arities 4`] = `"Cannot declare b (with 1 argument) when b (with 1 argument) was previously declared"`;
 
-exports[`all() 1`] = `"all([]) is always true"`;
+exports[`all() 1`] = `"all([]) is always trivially satisfied"`;
 
-exports[`atLeast() 1`] = `"atLeast(0, args) always true"`;
+exports[`atLeast() 1`] = `"atLeast(0, args) always trivially satisfied"`;
 
 exports[`atLeast() 2`] = `"atLeast(4, args) with 3 arguments is unsatisfiable"`;
 
 exports[`atMost() 1`] = `"atMost(-1, args) is unsatisfiable"`;
 
-exports[`atMost() 2`] = `"atMost(5, args) with 3 arguments is always true"`;
+exports[`atMost() 2`] = `"atMost(5, args) with 3 arguments is always trivially satisfied"`;
 
 exports[`equals() 1`] = `"equal([], []) is vacuous"`;
 
@@ -80,7 +80,7 @@ exports[`exactly() 2`] = `"exactly(-1, args) with 3 arguments is unsatisfiable"`
 
 exports[`exactly() 3`] = `"exactly(4, args) with 3 arguments is unsatisfiable"`;
 
-exports[`exactly() 4`] = `"exactly(0, []) is always true"`;
+exports[`exactly() 4`] = `"exactly(0, []) is always trivially satisfied"`;
 
 exports[`quantification() 1`] = `"quantify(-2, -1, args) with 3 arguments is unsatisfiable"`;
 
@@ -94,6 +94,6 @@ exports[`quantify() 2`] = `"quantify(1.3, 1.4, args) with 3 arguments is unsatis
 
 exports[`quantify() 3`] = `"quantify(5, 5, args) with 3 arguments is unsatisfiable"`;
 
-exports[`quantify() 4`] = `"quantify(0, 3, args) with 3 arguments is always true"`;
+exports[`quantify() 4`] = `"quantify(0, 3, args) with 3 arguments is always trivially satisfied"`;
 
 exports[`unique() 1`] = `"unique([]) is unsatisfiable"`;
