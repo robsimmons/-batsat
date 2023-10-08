@@ -452,6 +452,7 @@ export class Problem {
     };
   }
 
+  /** Print current constraints to the console */
   showConstraints() {
     this._constraints.map(({ lo, hi, clause }, i) => {
       let num =
@@ -474,6 +475,7 @@ export class Problem {
     });
   }
 
+  /** Attempt to satisfy all the constraints descibed so far */
   solve() {
     if (this.nonRuleConstraints === null) {
       this.nonRuleConstraints = this._constraints.length;
@@ -654,13 +656,19 @@ export class Problem {
     }
   }
 
-  get values() {
+  /**
+   * Returns the list of true atoms in the satisfying assignment.
+   *
+   * Returns `null` if `solve()` has been run or if constraints have been
+   * modified since `solve()` was last run.
+   */
+  get values(): null | Atom[] {
     if (this.satisfyingAssignment === null) {
       return null;
     }
 
     return this.satisfyingAssignment
       .map((v, i) => (v ? this.fromInternal[i] : undefined))
-      .filter((x) => x);
+      .filter((x): x is Atom => !!x);
   }
 }
