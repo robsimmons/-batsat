@@ -99,8 +99,8 @@ Require that some number of arguments be satisfied
 
 Parameters:
 
-- `min`: Minimum number of arguments that must be true (inclusive)
-- `max`: Maximum number of arguments that must be true (inclusive)
+- `min`: Minimum number of arguments that must be satisfied (inclusive)
+- `max`: Maximum number of arguments that must be satisfied (inclusive)
 
 #### :gear: exactly
 
@@ -114,7 +114,7 @@ Require that exactly a given number of the arguments be satisfied
 
 Parameters:
 
-- `n`: The number of arguments from the list that must be true
+- `n`: The number of arguments from the list that must be satisfied
 
 #### :gear: all
 
@@ -139,7 +139,7 @@ Require that some non-zero number of arguments be satisfied
 
 Parameters:
 
-- `min`: The minimum number of arguments that must be true (inclusive)
+- `min`: The minimum number of arguments that must be satisfied (inclusive)
 
 #### :gear: atMost
 
@@ -153,7 +153,7 @@ Require that at most some number of arguments be satisfied
 
 Parameters:
 
-- `max`: The maximum number of arguments that must be true (inclusive)
+- `max`: The maximum number of arguments that must be satisfied (inclusive)
 
 #### :gear: unique
 

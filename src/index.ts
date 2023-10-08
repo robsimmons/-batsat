@@ -62,8 +62,8 @@ export class Problem {
   /**
    * Require that some number of arguments be satisfied
    *
-   * @param min Minimum number of arguments that must be true (inclusive)
-   * @param max Maximum number of arguments that must be true (inclusive)
+   * @param min Minimum number of arguments that must be satisfied (inclusive)
+   * @param max Maximum number of arguments that must be satisfied (inclusive)
    */
   quantify(min: number, max: number, propositions: Proposition[]) {
     if (!(0 <= max && Math.ceil(min) <= Math.floor(max) && min <= propositions.length)) {
@@ -73,7 +73,7 @@ export class Problem {
     }
     if (min <= 0 && max >= propositions.length) {
       throw new Error(
-        `quantify(${min}, ${max}, args) with ${propositions.length} arguments is always true`,
+        `quantify(${min}, ${max}, args) with ${propositions.length} arguments is always trivially satisfied`,
       );
     }
 
@@ -91,14 +91,14 @@ export class Problem {
    *
    * `p.exactly(n, [a, b, c...])` is equivalent to `p.quantify(n, n, [a, b, c...])`
    *
-   * @param n The number of arguments from the list that must be true
+   * @param n The number of arguments from the list that must be satisfied
    */
   exactly(n: number, propositions: Proposition[]) {
     if (!(0 <= n && n <= propositions.length && Math.round(n) === n)) {
       throw new Error(`exactly(${n}, args) with ${propositions.length} arguments is unsatisfiable`);
     }
     if (propositions.length === 0) {
-      throw new Error(`exactly(0, []) is always true`);
+      throw new Error(`exactly(0, []) is always trivially satisfied`);
     }
 
     this.quantify(n, n, propositions);
@@ -112,7 +112,7 @@ export class Problem {
    */
   all(propositions: Proposition[]) {
     if (propositions.length === 0) {
-      throw new Error(`all([]) is always true`);
+      throw new Error(`all([]) is always trivially satisfied`);
     }
 
     this.quantify(propositions.length, propositions.length, propositions);
@@ -123,7 +123,7 @@ export class Problem {
    *
    * `p.atLeast(n, [a, b, c, d])` is equivalent to `p.quantify(n, 4, [a, b, c, d])`
    *
-   * @param min The minimum number of arguments that must be true (inclusive)
+   * @param min The minimum number of arguments that must be satisfied (inclusive)
    */
   atLeast(min: number, propositions: Proposition[]) {
     if (min > propositions.length) {
@@ -132,7 +132,7 @@ export class Problem {
       );
     }
     if (min <= 0) {
-      throw new Error(`atLeast(0, args) always true`);
+      throw new Error(`atLeast(0, args) always trivially satisfied`);
     }
 
     this.quantify(min, propositions.length, propositions);
@@ -143,14 +143,14 @@ export class Problem {
    *
    * `p.atMost(n, [a, b, c])` is equivalent to `p.quantify(0, n, [a, b, c])`
    *
-   * @param max The maximum number of arguments that must be true (inclusive)
+   * @param max The maximum number of arguments that must be satisfied (inclusive)
    */
   atMost(max: number, propositions: Proposition[]) {
     if (max < 0) {
       throw new Error(`atMost(${max}, args) is unsatisfiable`);
     }
     if (max >= propositions.length) {
-      throw new Error(`atMost(${max}, args) with ${propositions.length} arguments is always true`);
+      throw new Error(`atMost(${max}, args) with ${propositions.length} arguments is always trivially satisfied`);
     }
 
     this.quantify(0, max, propositions);
