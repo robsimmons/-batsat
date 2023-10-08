@@ -285,7 +285,7 @@ export class Problem {
   /**
    * Requires two conjuctive formulas to have the same truth value.
    *
-   * An array is treated as conjunction: `Equal([a, b], [c, d, e])` logically
+   * An array is treated as conjunction: `p.equal([a, b], [c, d, e])` logically
    * means `(a /\ b) <-> (c /\ d /\ e)`.
    *
    * @param a A conjuctive list of propositions
@@ -351,7 +351,7 @@ export class Problem {
    * from some premise that holds, which makes Rule different from Implies,
    * aside from them facing the opposite direction.)
    *
-   * An array of premises is treated as conjunction: `Rule(a, [b, c, d])`
+   * An array of premises is treated as conjunction: `p.rule(a, [b, c, d])`
    * logically means that `(b /\ c /\ d) -> a` and that, if `a` holds,
    * either `(b /\ c /\ d)` OR the premises of some other rule that has
    * `a` as its conclusion must hold.
