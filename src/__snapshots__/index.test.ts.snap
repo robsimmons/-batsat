@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Negations allowed in implication heads, but not rule heads 1`] = `"Conclusion '!c' of a rule must be positive"`;
+
+exports[`Test predicate and constant syntax 1`] = `"Predicate 'A' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 2`] = `"Predicate ' a ' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 3`] = `"Predicate 'b c' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 4`] = `"Predicate '1b' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 5`] = `"Element 'X' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 6`] = `"Element 'd e' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+
+exports[`Test predicate and constant syntax 7`] = `"Atom 'a z' has 1 argument, but a expects 2 arguments"`;
+
+exports[`Test predicate and constant syntax 8`] = `"Atom 'a z y' not declared"`;
+
+exports[`Test predicate and constant syntax 9`] = `"Atom 'a x y z' has 3 arguments, but a expects 2 arguments"`;
+
+exports[`Test predicate and constant syntax 10`] = `"Atom 'b x y z' has 3 arguments, but b expects 1 argument"`;
+
+exports[`Test predicate and constant syntax 11`] = `"Argument 'Z' in atom 'a Z y' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
+
+exports[`Test predicate and constant syntax 12`] = `"Predicate '_a' in atom '_a' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
+
+exports[`Test predicate and constant syntax 13`] = `"No predicate 'f' declared"`;
+
+exports[`Unsatisfiable constraints raise an exception 1`] = `"Timeout"`;
+
+exports[`Unsupported arities 1`] = `"No current support for predicate 'a' with arity 4"`;
+
+exports[`Unsupported arities 2`] = `"Cannot declare b/0 when b/1 was previously declared"`;
+
+exports[`Unsupported arities 3`] = `"Cannot declare b/1 when b/1 was previously declared"`;
+
+exports[`Unsupported arities 4`] = `"Cannot declare b/1 when b/1 was previously declared"`;
+
+exports[`all() 1`] = `"all([]) is always true"`;
+
+exports[`atLeast() 1`] = `"atLeast(0, args) always true"`;
+
+exports[`atLeast() 2`] = `"atLeast(4, args) with 3 arguments is unsatisfiable"`;
+
+exports[`atMost() 1`] = `"atMost(-1, args) is unsatisfiable"`;
+
+exports[`atMost() 2`] = `"atMost(5, args) with 3 arguments is always true"`;
+
+exports[`equals() 1`] = `"equal([], []) is vacuous"`;
+
+exports[`exactly() 1`] = `"exactly(1.5, args) with 3 arguments is unsatisfiable"`;
+
+exports[`exactly() 2`] = `"exactly(-1, args) with 3 arguments is unsatisfiable"`;
+
+exports[`exactly() 3`] = `"exactly(4, args) with 3 arguments is unsatisfiable"`;
+
+exports[`exactly() 4`] = `"exactly(0, []) is always true"`;
+
+exports[`quantification() 1`] = `"quantify(-2, -1, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantification() 2`] = `"quantify(5, 6, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantification() 3`] = `"quantify(2, 1, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantify() 1`] = `"quantify(-1, -1, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantify() 2`] = `"quantify(1.3, 1.4, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantify() 3`] = `"quantify(5, 5, args) with 3 arguments is unsatisfiable"`;
+
+exports[`quantify() 4`] = `"quantify(0, 3, args) with 3 arguments is always true"`;
+
+exports[`unique() 1`] = `"unique([]) is unsatisfiable"`;
