@@ -1,4 +1,5 @@
 import { Problem } from '.';
+import { Proposition } from './attrs-and-props';
 
 function exactTest(p: Problem, models: Proposition[][], minTests?: number, maxTests?: number) {
   let MIN = minTests || 100;

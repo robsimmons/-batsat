@@ -150,7 +150,9 @@ export class Problem {
       throw new Error(`atMost(${max}, args) is unsatisfiable`);
     }
     if (max >= propositions.length) {
-      throw new Error(`atMost(${max}, args) with ${propositions.length} arguments is always trivially satisfied`);
+      throw new Error(
+        `atMost(${max}, args) with ${propositions.length} arguments is always trivially satisfied`,
+      );
     }
 
     this.quantify(0, max, propositions);
