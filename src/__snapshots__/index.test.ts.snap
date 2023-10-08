@@ -1,42 +1,66 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Negations allowed in implication heads, but not rule heads 1`] = `"Conclusion '!c' of a rule must be positive"`;
+exports[`Negations allowed in implication heads, but not rule heads 1`] = `"Conclusion '!c' of a rule must not be negated"`;
 
-exports[`Test predicate and constant syntax 1`] = `"Predicate 'A' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 1`] = `"Predicate 'A' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 2`] = `"Predicate ' a ' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 2`] = `"Predicate ' a ' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 3`] = `"Predicate 'b c' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 3`] = `"Predicate 'b c' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 4`] = `"Predicate '1b' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 4`] = `"Predicate '1b' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 5`] = `"Element 'X' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 5`] = `"Element 'X' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 6`] = `"Element 'd e' must start with a lowercase letter and contain only alphanumeric characters and _"`;
+exports[`Test predicate and element syntax 6`] = `"Element '1X' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 7`] = `"Atom 'a z' has 1 argument, but a expects 2 arguments"`;
+exports[`Test predicate and element syntax 7`] = `"Element 'd e' must start with a lowercase letter and contain only alphanumeric characters and _"`;
 
-exports[`Test predicate and constant syntax 8`] = `"Atom 'a z y' not declared"`;
+exports[`Test predicate and element syntax 8`] = `"Cannot declare a (with 1 argument) when a (with 2 arguments) was previously declared"`;
 
-exports[`Test predicate and constant syntax 9`] = `"Atom 'a x y z' has 3 arguments, but a expects 2 arguments"`;
+exports[`Test predicate and element syntax 9`] = `"Cannot declare a (with 2 arguments) when a (with 2 arguments) was previously declared"`;
 
-exports[`Test predicate and constant syntax 10`] = `"Atom 'b x y z' has 3 arguments, but b expects 1 argument"`;
+exports[`Test predicate and element syntax 10`] = `"Cannot declare d (with 0 arguments) when d (with 0 arguments) was previously declared"`;
 
-exports[`Test predicate and constant syntax 11`] = `"Argument 'Z' in atom 'a Z y' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
+exports[`Test predicate and element syntax 11`] = `"No predicate 'f' declared"`;
 
-exports[`Test predicate and constant syntax 12`] = `"Predicate '_a' in atom '_a' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
+exports[`Test predicate and element syntax 12`] = `"Argument 'Z' in attribute 'a Z y' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
 
-exports[`Test predicate and constant syntax 13`] = `"No predicate 'f' declared"`;
+exports[`Test predicate and element syntax 13`] = `"Predicate '_a' in attribute '_a' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores."`;
+
+exports[`Test predicate and element syntax 14`] = `"Atom 'a x' seems to have 1 argument, but 'a' expects 2 arguments"`;
+
+exports[`Test predicate and element syntax 15`] = `"Atom 'a x x z' seems to have 3 arguments, but 'a' expects 2 arguments"`;
+
+exports[`Test predicate and element syntax 16`] = `"Atom 'b' seems to have 0 arguments, but 'b' expects 1 argument"`;
+
+exports[`Test predicate and element syntax 17`] = `"Atom 'b x x' seems to have 2 arguments, but 'b' expects 1 argument"`;
+
+exports[`Test predicate and element syntax 18`] = `"Argument #1 of 'b' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test predicate and element syntax 19`] = `"Argument #1 of 'a' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test predicate and element syntax 20`] = `"Argument #2 of 'a' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test predicate and element syntax 21`] = `"Argument #1 of 'c' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test predicate and element syntax 22`] = `"Argument #2 of 'c' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test predicate and element syntax 23`] = `"Argument #3 of 'c' is 'z', which is not a valid argument in this position"`;
+
+exports[`Test solution lookup 1`] = `"No predicate 'c' declared"`;
+
+exports[`Test solution lookup 2`] = `"Attribute 'c' was defined after this solution was generated"`;
 
 exports[`Unsatisfiable constraints raise an exception 1`] = `"Timeout"`;
 
 exports[`Unsupported arities 1`] = `"No current support for predicate 'a' with arity 4"`;
 
-exports[`Unsupported arities 2`] = `"Cannot declare b/0 when b/1 was previously declared"`;
+exports[`Unsupported arities 2`] = `"Cannot declare b (with 0 arguments) when b (with 1 argument) was previously declared"`;
 
-exports[`Unsupported arities 3`] = `"Cannot declare b/1 when b/1 was previously declared"`;
+exports[`Unsupported arities 3`] = `"Cannot declare b (with 1 argument) when b (with 1 argument) was previously declared"`;
 
-exports[`Unsupported arities 4`] = `"Cannot declare b/1 when b/1 was previously declared"`;
+exports[`Unsupported arities 4`] = `"Cannot declare b (with 1 argument) when b (with 1 argument) was previously declared"`;
 
 exports[`all() 1`] = `"all([]) is always true"`;
 

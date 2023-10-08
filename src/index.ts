@@ -2,12 +2,8 @@ type Assignment = boolean[];
 type Clause = InternalProposition[];
 type Constraint = { lo: number; hi: number; clause: Clause }; // Inclusive bounds
 
-function lookup(assignment: Assignment, literal: InternalProposition) {
-  return literal < 0 ? !assignment[-literal] : assignment[literal];
-}
-
 /**
- * Atoms are the things that are assigned truth or falsehood in the system.
+ * Attributes are the things that are assigned a value (truth or falsehood) in the system.
  *
  * Examples: `a`, `sees tim falcon`, `dead warrior`
  *
@@ -15,113 +11,191 @@ function lookup(assignment: Assignment, literal: InternalProposition) {
  * the `sees` predicate requires two arguments, `tim` and `falcon`, and the `dead`
  * predicate requires one argument, `warrior`.
  */
-export type Atom = string;
-type InternalAtom = number; // Int, > 0 (0 is a synoynm for True)
+export type Attribute = string;
+type InternalAttribute = number; // Int, > 0 (0 is a synoynm for True)
 
 /**
- * A Proposition is either an atom --- like `p` or `hasSword warrior` --- or its
+ * A Proposition is either an an attribute --- like `p` or `hasSword warrior` --- or its
  * negation --- like `!p` or `!hasSword warrior`.
+ *
+ * The proposition `hasSword warror` is satsfied when `hasSword warror` is assigned the
+ * value `true`, and the proposition `!hasSword warror` is satsfied when the attribute
+ * attribute `hasSword warror` is assigned the value `false`.
  */
 export type Proposition = string;
+/**
+ * If the attribute `hasSword warror` maps to the internal attribute 17, then the proposition
+ * `hasSword warror` maps to 17 and the proposition `!hasSword warror` maps to -17.
+ */
 type InternalProposition = number; // Either a predicate or the negation of a predicate
 
 const IDENT_REGEX = /^[a-z][A-Za-z0-9_]*$/;
 
-export class Problem {
-  /** Maps from InternalAtom to Atom. Internal-only atoms are the empty string. */
-  private fromInternal: Atom[] = [''];
+type AttributeMap<T> = {
+  [pred: string]: [
+    undefined | T,
+    undefined | { [arg: string]: T },
+    undefined | { [arg: string]: { [arg: string]: T } },
+    undefined | { [arg: string]: { [arg: string]: { [arg: string]: T } } },
+  ];
+};
 
-  /** Maps from a (parsed) Atom to InternalAtom. */
-  private toInternal: {
-    [pred: string]: [
-      undefined | InternalAtom,
-      undefined | { [arg: string]: InternalAtom },
-      undefined | { [arg: string]: { [arg: string]: InternalAtom } },
-      undefined | { [arg: string]: { [arg: string]: { [arg: string]: InternalAtom } } },
-    ];
-  } = {};
+function lookupAttributeInMap<T>(attribute: Attribute, map: AttributeMap<T>): T {
+  const [predicate, ...args] = attribute.split(' ');
+  if (!predicate.match(IDENT_REGEX)) {
+    throw new Error(
+      `Predicate '${predicate}' in attribute '${attribute}' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
+    );
+  }
+  for (const arg of args) {
+    if (!arg.match(IDENT_REGEX)) {
+      throw new Error(
+        `Argument '${arg}' in attribute '${attribute}' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
+      );
+    }
+  }
+  const attributeMap = map[predicate];
+  if (!attributeMap || attributeMap.every((x) => x === undefined)) {
+    throw new Error(`No predicate '${predicate}' declared`);
+  }
 
-  private _rules: { [head: InternalAtom]: InternalProposition[] } = {};
-  private _constraints: Constraint[] = [];
+  function wrongArityError() {
+    const arity = attributeMap.findIndex((x) => x !== undefined);
+    return new Error(
+      `Atom '${attribute}' seems to have ${args.length} argument${
+        args.length === 1 ? '' : 's'
+      }, but '${predicate}' expects ${arity} argument${arity === 1 ? '' : 's'}`,
+    );
+  }
+
+  function invalidArgumentError(position: number, arg: string) {
+    return new Error(
+      `Argument #${position} of '${predicate}' is '${arg}', which is not a valid argument in this position`,
+    );
+  }
+
+  switch (args.length) {
+    case 0:
+      if (!attributeMap[0]) throw wrongArityError();
+      return attributeMap[0];
+    case 1:
+      if (!attributeMap[1]) throw wrongArityError();
+      if (!attributeMap[1][args[0]]) throw invalidArgumentError(1, args[0]);
+      return attributeMap[1][args[0]];
+    case 2:
+      if (!attributeMap[2]) throw wrongArityError();
+      if (!attributeMap[2][args[0]]) throw invalidArgumentError(1, args[0]);
+      if (!attributeMap[2][args[0]][args[1]]) throw invalidArgumentError(2, args[1]);
+      return attributeMap[2][args[0]][args[1]];
+    case 3:
+      if (!attributeMap[3]) throw wrongArityError();
+      if (!attributeMap[3][args[0]]) throw invalidArgumentError(1, args[0]);
+      if (!attributeMap[3][args[0]][args[1]]) throw invalidArgumentError(2, args[1]);
+      if (!attributeMap[3][args[0]][args[1]][args[2]]) throw invalidArgumentError(3, args[2]);
+      return attributeMap[3][args[0]][args[1]][args[2]];
+
+    /* istanbul ignore next: should be impossible */
+    default:
+      throw new Error(
+        `Cannot handle arity ${args.length} for ${attribute} (internal error, this should be impossible!)`,
+      );
+  }
+}
+
+export class Solution {
+  private satisfyingAssignment: boolean[];
+  private fromInternal: Attribute[];
+  private proxy: { [attribute: Attribute]: boolean };
+  private trueAttributesCache: null | string[] = null;
+
+  constructor(
+    satisfyingAssignment: boolean[],
+    toInternal: AttributeMap<InternalAttribute>,
+    fromInternal: Attribute[],
+  ) {
+    this.satisfyingAssignment = satisfyingAssignment;
+    this.fromInternal = fromInternal;
+    this.proxy = new Proxy(
+      {},
+      {
+        get(_: { [attribute: Attribute]: boolean }, attribute: Attribute) {
+          const internal = lookupAttributeInMap(`${attribute}`, toInternal);
+          if (internal >= satisfyingAssignment.length) {
+            throw new Error(
+              `Attribute '${attribute}' was defined after this solution was generated`,
+            );
+          }
+          return satisfyingAssignment[internal];
+        },
+      },
+    );
+  }
 
   /**
-   * The solution of a solved Problem. null if Solve hasn't successfully returned.
-   * Must have the same length as fromInternal.
+   * Return all the atoattributesms that have been marked true in the solution (in sorted order)
    */
-  private satisfyingAssignment: null | boolean[] = null;
+  get trueAttributes(): string[] {
+    if (this.trueAttributesCache === null) {
+      this.trueAttributesCache = this.satisfyingAssignment
+        .map((val, i) => (val ? i : null))
+        .filter((x): x is number => x !== null && x > 0)
+        .map((i) => this.fromInternal[i])
+        .filter((x) => x !== '')
+        .sort();
+    }
+    return this.trueAttributesCache;
+  }
+
+  /** Provides a read-only dictionary for looking up the value of all attributes */
+  get lookup(): { [attribute: Attribute]: boolean } {
+    return this.proxy;
+  }
+}
+
+export class Problem {
+  /**
+   * Maps from InternalAttribute to Attributes. Internal-only attributes map to the
+   * empty string.
+   */
+  private fromInternal: Attribute[] = [''];
+
+  /** Maps from a Attribute to InternalAttribute. */
+  private toInternal: AttributeMap<InternalAttribute> = {};
+
+  private constraints: Constraint[] = [];
 
   /**
-   * Solving produces extra
+   * If an attribute is defined by a set of rules, we have to keep track of every rule
+   * of that can justify that attribute in order to implement iff-completion.
+   */
+  private rules: { [head: InternalAttribute]: InternalProposition[] } = {};
+
+  /**
+   * Checkpoint to allow removal of any extra constraints added for iff-completion
    */
   private nonRuleConstraints: null | number = null;
 
+  /**
+   * The reset() function must be called before new constraints are added.
+   */
   private reset() {
     if (this.nonRuleConstraints !== null) {
-      this._constraints = this._constraints.slice(0, this.nonRuleConstraints);
+      this.constraints = this.constraints.slice(0, this.nonRuleConstraints);
     }
-    this.satisfyingAssignment = null;
     this.nonRuleConstraints = null;
   }
 
   /**
-   * Lookup a proposition, which is expected to already exist, in the toInternal array.
-   * Throw an exception if it doesn't exist.
+   * Lookup a proposition. The attribute contained in the proposition should
+   * already exist (an exception will be throw if it does not).
    */
   private lookup(prop: Proposition): InternalProposition {
-    const [sign, atom] = prop[0] === '!' ? [-1, prop.slice(1)] : [1, prop];
-    const [predicate, ...args] = atom.split(' ');
-    if (!predicate.match(IDENT_REGEX)) {
-      throw new Error(
-        `Predicate '${predicate}' in atom '${atom}' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
-      );
-    }
-    for (const arg of args) {
-      if (!arg.match(IDENT_REGEX)) {
-        throw new Error(
-          `Argument '${arg}' in atom '${atom}' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
-        );
-      }
-    }
-    if (!this.toInternal[predicate] || this.toInternal[predicate].every((x) => x === undefined)) {
-      throw new Error(`No predicate '${predicate}' declared`);
-    }
-    const arity = this.toInternal[predicate].findIndex((x) => x !== undefined);
-    if (!this.toInternal[predicate][args.length]) {
-      throw new Error(
-        `Atom '${atom}' has ${args.length} argument${
-          args.length === 1 ? '' : 's'
-        }, but ${predicate} expects ${arity} argument${arity === 1 ? '' : 's'}`,
-      );
-    }
-
-    let result: number | undefined;
-    switch (args.length) {
-      case 0:
-        result = this.toInternal[predicate][0];
-        break;
-      case 1:
-        result = this.toInternal[predicate][1]?.[args[0]];
-        break;
-      case 2:
-        result = this.toInternal[predicate][2]?.[args[0]]?.[args[1]];
-        break;
-      case 3:
-        result = this.toInternal[predicate][3]?.[args[0]]?.[args[1]]?.[args[2]];
-        break;
-      /* istanbul ignore next: should be impossible */
-      default:
-        throw new Error(
-          `Cannot handle arity ${args.length} for ${atom} (internal error, this should be impossible!)`,
-        );
-    }
-    if (!result) {
-      throw new Error(`Atom '${atom}' not declared`);
-    }
-    return sign * result;
+    const [sign, attribute] = prop[0] === '!' ? [-1, prop.slice(1)] : [1, prop];
+    return sign * lookupAttributeInMap(attribute, this.toInternal);
   }
 
   /**
-   * Require that some number of arguments be true.
+   * Require that some number of arguments be satisfied
    *
    * @param min Minimum number of arguments that must be true (inclusive)
    * @param max Maximum number of arguments that must be true (inclusive)
@@ -140,7 +214,7 @@ export class Problem {
 
     const clause = propositions.map((arg) => this.lookup(arg));
     this.reset();
-    this._constraints.push({
+    this.constraints.push({
       clause,
       lo: Math.max(0, Math.ceil(min)),
       hi: Math.min(propositions.length, Math.floor(max)),
@@ -148,7 +222,7 @@ export class Problem {
   }
 
   /**
-   * Require that exactly a given number of the arguments be true.
+   * Require that exactly a given number of the arguments be satisfied
    *
    * `p.exactly(n, [a, b, c...])` is equivalent to `p.quantify(n, n, [a, b, c...])`
    *
@@ -166,7 +240,7 @@ export class Problem {
   }
 
   /**
-   * Require that all arguments be true.
+   * Require that all arguments be satisfied
    *
    * `p.all([a, b, c])` is equivalent to `p.quantify(3, 3, [a, b, c])` or
    * `p.exactly(3, [a, b, c])`
@@ -180,7 +254,7 @@ export class Problem {
   }
 
   /**
-   * Require that some non-zero number of arguments be true
+   * Require that some non-zero number of arguments be satisfied
    *
    * `p.atLeast(n, [a, b, c, d])` is equivalent to `p.quantify(n, 4, [a, b, c, d])`
    *
@@ -200,9 +274,9 @@ export class Problem {
   }
 
   /**
-   * Require that at most some number of arguments be true
+   * Require that at most some number of arguments be satisfied
    *
-   * `p.atMost(n, [a, b, c])` is equivlanet to `p.quantify(0, n, [a, b, c])`
+   * `p.atMost(n, [a, b, c])` is equivalent to `p.quantify(0, n, [a, b, c])`
    *
    * @param max The maximum number of arguments that must be true (inclusive)
    */
@@ -218,7 +292,7 @@ export class Problem {
   }
 
   /**
-   * Require that exactly one of the arguments be true.
+   * Require that exactly one of the arguments be satisfied
    *
    * `p.unique(a, b, c...)` is equivlanet to `p.exactly(1, a, b, c...)`
    */
@@ -231,7 +305,7 @@ export class Problem {
   }
 
   /**
-   * Marks two propositions as inconsistent
+   * Require that two propositions not be simultaneously satisfied
    */
   inconsistent(a: Proposition, b: Proposition) {
     this.atMost(1, [a, b]);
@@ -239,17 +313,18 @@ export class Problem {
 
   /**
    * Indicates that the premise or premises imply the conclusion:
-   * if the premise(s) hold(s), the conclusion must also hold.
+   * if all premises are satisfied, the conclusion must be satisfied.
    *
    * An array of premises is treated as conjunction: `p.implies([a, b, c], d)`
    * logically means `(a /\ b /\ c) -> d`.
    *
-   * Leaves open the possibility that the conclusion must be true even if all
-   * premises are false. If you only want `d` to be true if there's some reason
-   * for it to be true, you want to use `rule()`, not `implies()`.
+   * Leaves open the possibility that the conclusion may be satisfied even if some
+   * premises are unsatisfied. If that's not what you want --- if you only want `d`
+   * to be satisfied if there's some rule that gives a reason for it to be satisfied,
+   * you want to use `rule()` instead of `implies()`.
    *
    * @param premises A conjuctive list of premises
-   * @param conclusion A proposition that must be true if premises are
+   * @param conclusion A proposition that must be satisfied if premises are
    */
   implies(premises: Proposition[], conclusion: Proposition) {
     const conc = this.lookup(conclusion);
@@ -257,16 +332,16 @@ export class Problem {
     const clause = [...prems, conc];
 
     this.reset();
-    this._constraints.push({
+    this.constraints.push({
       clause,
       lo: 1,
       hi: clause.length,
     });
   }
 
-  private iff(premises: InternalAtom[], conclusion: InternalAtom) {
+  private iff(premises: InternalAttribute[], conclusion: InternalAttribute) {
     // conclusion implies, in turn, each premise
-    this._constraints.push(
+    this.constraints.push(
       ...premises.map((premise) => ({
         clause: [premise, -conclusion],
         lo: 1,
@@ -275,7 +350,7 @@ export class Problem {
     );
     // premises imply conclusion
     const clause = [...premises.map((prem) => -prem), conclusion];
-    this._constraints.push({
+    this.constraints.push({
       clause,
       lo: 1,
       hi: clause.length,
@@ -283,7 +358,8 @@ export class Problem {
   }
 
   /**
-   * Requires two conjuctive formulas to have the same truth value.
+   * Requires two conjuctive formulas be equal: either both are satisfied or
+   * neither are satisfied. (This is also called an if-and-only-if relationship.)
    *
    * An array is treated as conjunction: `p.equal([a, b], [c, d, e])` logically
    * means `(a /\ b) <-> (c /\ d /\ e)`.
@@ -310,7 +386,7 @@ export class Problem {
       if (b.length === 1) {
         const literalA = this.lookup(a[0]);
         const literalB = this.lookup(b[0]);
-        this._constraints.push(
+        this.constraints.push(
           { lo: 1, hi: 2, clause: [literalA, -literalB] },
           { lo: 1, hi: 2, clause: [-literalA, literalB] },
         );
@@ -335,56 +411,68 @@ export class Problem {
   }
 
   /**
-   * Assert that a single fact must  be true.
+   * Assert that a single proposition must be satisfied.
    */
   assert(a: Proposition) {
     this.all([a]);
   }
 
   /**
-   * Indicates that the conclusion (the "head" of the rule) is defined
-   * by its premise. If the premise(s) hold(s), the conclusion must also hold,
-   * and if the conclusion holds, then the truth of that conclusion must be
-   * derivable via some rule for which the premise holds.
+   * Indicates that the attribute in the conclusion (the "head" of the rule) is
+   * defined by this rule (and every other rule that has the attribute at the head).
+   * If all premises are satisfied, the conclusion must be assigned `true`,
+   * and if the conclusion is assigned `true`, then that must be justified
+   * derivable via some rule that defines the conclusion, for which the premise holds.
    *
-   * (It's the second part, the fact that the conclusion must be derivable
-   * from some premise that holds, which makes Rule different from Implies,
-   * aside from them facing the opposite direction.)
+   * It's the second part, the fact that the conclusion must be derivable
+   * from some premise that holds, which makes `rule()` different from `implies()`.
+   * They also "point" in opposite directions.
    *
    * An array of premises is treated as conjunction: `p.rule(a, [b, c, d])`
-   * logically means that `(b /\ c /\ d) -> a` and that, if `a` holds,
-   * either `(b /\ c /\ d)` OR the premises of some other rule that has
-   * `a` as its conclusion must hold.
+   * logically means that `(b /\ c /\ d) -> a` and that, if `a` is assigned `true`,
+   * either `(b /\ c /\ d)` is satisfied OR the premises of some other rule that has
+   * `a` as its conclusion is satisfied.
    *
    * @param conclusion The head of the rule (must not be negated)
    * @param premises A conjuctive list of premises
    */
-  rule(conclusion: Atom, premises: Proposition[]) {
+  rule(conclusion: Attribute, premises: Proposition[]) {
     const conc = this.lookup(conclusion);
     const prems = premises.map((p) => this.lookup(p));
     if (conc < 0) {
-      throw new Error(`Conclusion '${conclusion}' of a rule must be positive`);
+      throw new Error(`Conclusion '${conclusion}' of a rule must not be negated`);
     }
     this.implies(premises, conclusion);
 
     // Add iff-completion
-    if (!this._rules[conc]) {
-      this._rules[conc] = [];
+    if (!this.rules[conc]) {
+      this.rules[conc] = [];
     }
     if (premises.length === 0) {
-      this._rules[conc].push(0);
+      this.rules[conc].push(0);
     } else if (premises.length === 1) {
-      this._rules[conc].push(prems[0]);
+      this.rules[conc].push(prems[0]);
     } else {
       const standin = this.generate();
       this.iff(prems, standin);
-      this._rules[conc].push(standin);
+      this.rules[conc].push(standin);
     }
   }
 
+  /**
+   * Check whether an assignment is satisfied given the current constraints.
+   *
+   * Returns `null` if the assignment satisfies all constraints, and otherwise
+   * returns a suggestion for which predicate should be flipped if we want to greedily
+   * search for a single assignment flip that leaves the most clauses satisfied.
+   */
   private satisfies(assignment: Assignment) {
+    function lookup(assignment: Assignment, literal: InternalProposition) {
+      return literal < 0 ? !assignment[-literal] : assignment[literal];
+    }
+
     const suggestionMap = assignment.map(() => 0);
-    let clausesSatisfied = this._constraints.reduce((accum, { lo, hi, clause }) => {
+    let clausesSatisfied = this.constraints.reduce((accum, { lo, hi, clause }) => {
       let numLiteralsInClauseSatisfied = clause.reduce(
         (accum, literal) => (lookup(assignment, literal) ? accum + 1 : accum),
         0,
@@ -431,11 +519,11 @@ export class Problem {
       return accum;
     }, 0);
 
-    if (clausesSatisfied === this._constraints.length) {
+    if (clausesSatisfied === this.constraints.length) {
       return null;
     }
 
-    let best: InternalAtom[] = [];
+    let best: InternalAttribute[] = [];
     let bestNum = 0;
     for (let i = 1; i < suggestionMap.length; i++) {
       if (suggestionMap[i] === bestNum) {
@@ -454,7 +542,7 @@ export class Problem {
 
   /** Print current constraints to the console */
   showConstraints() {
-    this._constraints.map(({ lo, hi, clause }, i) => {
+    this.constraints.map(({ lo, hi, clause }, i) => {
       let num =
         hi >= clause.length
           ? `at least ${lo}`
@@ -475,13 +563,17 @@ export class Problem {
     });
   }
 
-  /** Attempt to satisfy all the constraints descibed so far */
-  solve() {
+  /**
+   * Attempt to find an assignment that will satisfy all the currently-declared constraints.
+   *
+   * Throws an exception if enough iterations go by without finding a satisfying assignment.
+   */
+  solve(): Solution {
     if (this.nonRuleConstraints === null) {
-      this.nonRuleConstraints = this._constraints.length;
+      this.nonRuleConstraints = this.constraints.length;
 
-      this._constraints.push(
-        ...Object.entries(this._rules).map(([head, possibleJustifications]) => {
+      this.constraints.push(
+        ...Object.entries(this.rules).map(([head, possibleJustifications]) => {
           return {
             lo: 1,
             hi: possibleJustifications.length + 1,
@@ -497,7 +589,7 @@ export class Problem {
     assignment[0] = true;
     let noise = 0;
     let result = this.satisfies(assignment);
-    let windowSize = Math.max(3, Math.ceil(this._constraints.length / 6));
+    let windowSize = Math.max(3, Math.ceil(this.constraints.length / 6));
     let window: number[] = [];
     for (let i = 0; i < windowSize; i++) {
       window.push(0);
@@ -522,7 +614,7 @@ export class Problem {
         assignment[guess] = !assignment[guess];
       }
 
-      // Should we change the noise? (Hoos 2002)
+      // Should we change the noise? (Variation of Hoos 2002)
       if (window.every((clausesSatisfied) => clausesSatisfied >= result!.clausesSatisfied)) {
         noise = noise + (1 - noise) * 0.2;
       } else {
@@ -544,35 +636,37 @@ export class Problem {
       }
     }
 
-    this.satisfyingAssignment = assignment;
+    return new Solution(assignment, this.toInternal, this.fromInternal);
   }
 
   /**
-   * Invariant: if an Atom is given as an argument, it must be valid, in
-   * canonical form, and must not already exist. Only the `this.predicate`
-   * method calls generate with an argument.
+   * Invariant: if an Attribute is given as an argument, it must be valid, in
+   * canonical form, and must not already exist. Only the `predicate()`
+   * method calls the `generate()` method with an argument.
    *
-   * With no argument, this creates an internal-only predicate.
+   * With no argument, this creates an internal-only predicate, and is used
+   * to create new temporaries.
    */
-  private generate(prop?: Atom): InternalAtom {
+  private generate(prop?: Attribute): InternalAttribute {
     const newLiteral = this.fromInternal.length;
     this.fromInternal.push(prop || '');
     return newLiteral;
   }
 
   /**
-   * Declares a new predicate.
+   * Declares a new attribute.
    *
-   * To create a new atom that takes no arguments, you can write
-   * something like `p.predicate('q')` or `p.predicate('q', [])`. Both mean
+   * To create a new attribute that takes no arguments, you can write
+   * something like `p.attribute('q')` or `p.attribute('q', [])`. Both mean
    * the same thing: they declare a predicate `q` that takes no
    * arguments.
    *
    * To specify a predicate that does take arguments, you must
    * describe the *domain* of those arguments. For instance, if
    * you wanted to describe some cats and their colors, so that
-   * you could say `colored celeste gray` and `colored terra orange`,
-   * then you'd declare a predicate `colored` like this:
+   * you could have attributes like `colored celeste gray` and
+   * `colored terra orange`, then you'd declare a predicate `colored` like
+   * this:
    *
    * ```
    * let cast = ['celeste', 'nimbus', 'terra'];
@@ -580,10 +674,10 @@ export class Problem {
    * p.predicate('colored', [cast, color]);
    * ```
    *
-   * @param name The name of the predicate.
-   * @param args The domains of the argument.
+   * @param name The name of the predicate
+   * @param args The domains of the argument
    */
-  predicate(name: string, args: string[][] = []) {
+  attribute(name: string, args: string[][] = []) {
     const arity = args.length;
     if (arity >= 4) {
       throw new Error(`No current support for predicate '${name}' with arity ${arity}`);
@@ -607,7 +701,11 @@ export class Problem {
       let existingArity = this.toInternal[name].findIndex((x) => x !== undefined);
       if (existingArity !== -1) {
         throw new Error(
-          `Cannot declare ${name}/${arity} when ${name}/${existingArity} was previously declared`,
+          `Cannot declare ${name} (with ${arity} argument${
+            arity === 1 ? '' : 's'
+          }) when ${name} (with ${existingArity} argument${
+            existingArity === 1 ? '' : 's'
+          }) was previously declared`,
         );
       }
     }
@@ -654,21 +752,5 @@ export class Problem {
         return;
       }
     }
-  }
-
-  /**
-   * Returns the list of true atoms in the satisfying assignment.
-   *
-   * Returns `null` if `solve()` has been run or if constraints have been
-   * modified since `solve()` was last run.
-   */
-  get values(): null | Atom[] {
-    if (this.satisfyingAssignment === null) {
-      return null;
-    }
-
-    return this.satisfyingAssignment
-      .map((v, i) => (v ? this.fromInternal[i] : undefined))
-      .filter((x): x is Atom => !!x);
   }
 }
