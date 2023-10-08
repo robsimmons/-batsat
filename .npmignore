@@ -1,2 +1,7 @@
 /dist/test
-*_test.js
+/.prettierrc
+/.github
+/src
+/coverage
+*.test.js
+jest.config.js
