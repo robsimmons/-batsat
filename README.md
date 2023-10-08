@@ -60,9 +60,10 @@ p.atMost(
   cast.map((c) => `home ${c} doghouse`),
 );
 
-console.log(p.values); // This will be null because solve() hasn't been called
-p.solve();
-console.log(p.values); // Something like ["species celeste cat", ...]
+const s = p.solve();
+s.trueAttributes; // Something like ["species celeste cat", ...]
+s.lookup['species celeste cat']; // Maybe true, maybe false
+s.lookup['species celeste cat'] === s.lookup['home celeste catlands']; // Definitely true
 ```
 
 <!-- TSDOC_START -->
