@@ -67,9 +67,10 @@ console.log(p.values); // Something like ["species celeste cat", ...]
 
 <!-- TSDOC_START -->
 
-## :factory: Solution
-
 ## :factory: Problem
+
+Problems are the primary engine of BatSAT. You use a problem to declare attributes,
+attach constraints, and generate solutions.
 
 ### Methods
 
@@ -295,3 +296,24 @@ Parameters:
 - `args`: The domains of the argument
 
 <!-- TSDOC_END -->
+
+## :factory: Solution
+
+Solutions are returned the solve() method of a problem.
+
+### Fields
+
+- [trueAttributes](#gear-trueAttributes)
+- [lookup](#gear-lookup)
+
+#### :gear: trueAttributes
+
+Holds all the attributes that have been assigned true in the solution (in sorted order).
+
+Type: `string[]`
+
+#### :gear: lookup
+
+A read-only map from attributes to their values.
+
+Type: `{ [attribute: string]: boolean }`

@@ -1,157 +1,22 @@
+import { Solution } from './Solution';
+import {
+  Attribute,
+  AttributeMap,
+  IDENT_REGEX,
+  InternalAttribute,
+  InternalProposition,
+  Proposition,
+  lookupAttributeInMap,
+} from './attrs-and-props';
+
 type Assignment = boolean[];
 type Clause = InternalProposition[];
 type Constraint = { lo: number; hi: number; clause: Clause }; // Inclusive bounds
 
 /**
- * Attributes are the things that are assigned a value (truth or falsehood) in the system.
- *
- * Examples: `a`, `sees tim falcon`, `dead warrior`
- *
- * The strings `a`, `sees` and `dead` are **Predicates**. In the examples above,
- * the `sees` predicate requires two arguments, `tim` and `falcon`, and the `dead`
- * predicate requires one argument, `warrior`.
+ * Problems are the primary engine of BatSAT. You use a problem to declare attributes,
+ * attach constraints, and generate solutions.
  */
-export type Attribute = string;
-type InternalAttribute = number; // Int, > 0 (0 is a synoynm for True)
-
-/**
- * A Proposition is either an an attribute --- like `p` or `hasSword warrior` --- or its
- * negation --- like `!p` or `!hasSword warrior`.
- *
- * The proposition `hasSword warror` is satsfied when `hasSword warror` is assigned the
- * value `true`, and the proposition `!hasSword warror` is satsfied when the attribute
- * attribute `hasSword warror` is assigned the value `false`.
- */
-export type Proposition = string;
-/**
- * If the attribute `hasSword warror` maps to the internal attribute 17, then the proposition
- * `hasSword warror` maps to 17 and the proposition `!hasSword warror` maps to -17.
- */
-type InternalProposition = number; // Either a predicate or the negation of a predicate
-
-const IDENT_REGEX = /^[a-z][A-Za-z0-9_]*$/;
-
-type AttributeMap<T> = {
-  [pred: string]: [
-    undefined | T,
-    undefined | { [arg: string]: T },
-    undefined | { [arg: string]: { [arg: string]: T } },
-    undefined | { [arg: string]: { [arg: string]: { [arg: string]: T } } },
-  ];
-};
-
-function lookupAttributeInMap<T>(attribute: Attribute, map: AttributeMap<T>): T {
-  const [predicate, ...args] = attribute.split(' ');
-  if (!predicate.match(IDENT_REGEX)) {
-    throw new Error(
-      `Predicate '${predicate}' in attribute '${attribute}' is not a well-formed predicate. Predicates must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
-    );
-  }
-  for (const arg of args) {
-    if (!arg.match(IDENT_REGEX)) {
-      throw new Error(
-        `Argument '${arg}' in attribute '${attribute}' is not a well-formed argument. Arguments must start with a lowercase letter and contain only alphanumeric characters and underscores.`,
-      );
-    }
-  }
-  const attributeMap = map[predicate];
-  if (!attributeMap || attributeMap.every((x) => x === undefined)) {
-    throw new Error(`No predicate '${predicate}' declared`);
-  }
-
-  function wrongArityError() {
-    const arity = attributeMap.findIndex((x) => x !== undefined);
-    return new Error(
-      `Atom '${attribute}' seems to have ${args.length} argument${
-        args.length === 1 ? '' : 's'
-      }, but '${predicate}' expects ${arity} argument${arity === 1 ? '' : 's'}`,
-    );
-  }
-
-  function invalidArgumentError(position: number, arg: string) {
-    return new Error(
-      `Argument #${position} of '${predicate}' is '${arg}', which is not a valid argument in this position`,
-    );
-  }
-
-  switch (args.length) {
-    case 0:
-      if (!attributeMap[0]) throw wrongArityError();
-      return attributeMap[0];
-    case 1:
-      if (!attributeMap[1]) throw wrongArityError();
-      if (!attributeMap[1][args[0]]) throw invalidArgumentError(1, args[0]);
-      return attributeMap[1][args[0]];
-    case 2:
-      if (!attributeMap[2]) throw wrongArityError();
-      if (!attributeMap[2][args[0]]) throw invalidArgumentError(1, args[0]);
-      if (!attributeMap[2][args[0]][args[1]]) throw invalidArgumentError(2, args[1]);
-      return attributeMap[2][args[0]][args[1]];
-    case 3:
-      if (!attributeMap[3]) throw wrongArityError();
-      if (!attributeMap[3][args[0]]) throw invalidArgumentError(1, args[0]);
-      if (!attributeMap[3][args[0]][args[1]]) throw invalidArgumentError(2, args[1]);
-      if (!attributeMap[3][args[0]][args[1]][args[2]]) throw invalidArgumentError(3, args[2]);
-      return attributeMap[3][args[0]][args[1]][args[2]];
-
-    /* istanbul ignore next: should be impossible */
-    default:
-      throw new Error(
-        `Cannot handle arity ${args.length} for ${attribute} (internal error, this should be impossible!)`,
-      );
-  }
-}
-
-export class Solution {
-  private satisfyingAssignment: boolean[];
-  private fromInternal: Attribute[];
-  private proxy: { [attribute: Attribute]: boolean };
-  private trueAttributesCache: null | string[] = null;
-
-  constructor(
-    satisfyingAssignment: boolean[],
-    toInternal: AttributeMap<InternalAttribute>,
-    fromInternal: Attribute[],
-  ) {
-    this.satisfyingAssignment = satisfyingAssignment;
-    this.fromInternal = fromInternal;
-    this.proxy = new Proxy(
-      {},
-      {
-        get(_: { [attribute: Attribute]: boolean }, attribute: Attribute) {
-          const internal = lookupAttributeInMap(`${attribute}`, toInternal);
-          if (internal >= satisfyingAssignment.length) {
-            throw new Error(
-              `Attribute '${attribute}' was defined after this solution was generated`,
-            );
-          }
-          return satisfyingAssignment[internal];
-        },
-      },
-    );
-  }
-
-  /**
-   * Return all the atoattributesms that have been marked true in the solution (in sorted order)
-   */
-  get trueAttributes(): string[] {
-    if (this.trueAttributesCache === null) {
-      this.trueAttributesCache = this.satisfyingAssignment
-        .map((val, i) => (val ? i : null))
-        .filter((x): x is number => x !== null && x > 0)
-        .map((i) => this.fromInternal[i])
-        .filter((x) => x !== '')
-        .sort();
-    }
-    return this.trueAttributesCache;
-  }
-
-  /** Provides a read-only dictionary for looking up the value of all attributes */
-  get lookup(): { [attribute: Attribute]: boolean } {
-    return this.proxy;
-  }
-}
-
 export class Problem {
   /**
    * Maps from InternalAttribute to Attributes. Internal-only attributes map to the
